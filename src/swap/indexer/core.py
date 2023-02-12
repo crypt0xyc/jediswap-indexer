@@ -15,16 +15,16 @@ from swap.indexer.abi import (
     transfer_decoder
     )
 from swap.indexer.context import IndexerContext
-from swap.indexer.daily import (
-    snapshot_exchange_day_data,
-    snapshot_pair_day_data,
-    snapshot_pair_hour_data,
-    snapshot_token_day_data,
-    update_exchange_day_data,
-    update_pair_day_data,
-    update_pair_hour_data,
-    update_token_day_data
-    )
+# from swap.indexer.daily import (
+#     snapshot_exchange_day_data,
+#     snapshot_pair_day_data,
+#     snapshot_pair_hour_data,
+#     snapshot_token_day_data,
+#     update_exchange_day_data,
+#     update_pair_day_data,
+#     update_pair_hour_data,
+#     update_token_day_data
+#     )
 from swap.indexer.helpers import (
     create_liquidity_snapshot,
     # create_token,

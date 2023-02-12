@@ -16,11 +16,11 @@ factory_address = "0x00dad44c139a476c7a17fc8141e6db680e9abc9f56fe249a105094c4438
 
 _event_to_handler = {
     "PairCreated": handle_pair_created,
-    "Transfer": handle_transfer,
-    "Swap": handle_swap,
+    # "Transfer": handle_transfer,
+    # "Swap": handle_swap,
     "Sync": handle_sync,
-    "Mint": handle_mint,
-    "Burn": handle_burn,
+    # "Mint": handle_mint,
+    # "Burn": handle_burn,
 }
 
 logger = get_logger(__name__)
@@ -59,7 +59,7 @@ async def handle_events(info: Info[IndexerContext], block_events: NewEvents):
         handler = _event_to_handler.get(event.name)
         if handler is not None:
             await handler(info, block, event)
-        else:
+        elif event.name not in ["Transfer", "Mint", "Burn", "Swap"]:
             logger.warn(f"Unhandled event {event.name}")
 
 

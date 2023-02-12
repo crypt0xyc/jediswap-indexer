@@ -1,7 +1,6 @@
 from typing import List
 
-from starknet_py.contract import (FunctionCallSerializer,
-                                  identifier_manager_from_abi)
+from starknet_py.contract import FunctionCallSerializer, identifier_manager_from_abi
 
 uint256_abi = {
     "name": "Uint256",

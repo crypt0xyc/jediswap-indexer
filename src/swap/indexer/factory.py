@@ -80,10 +80,10 @@ async def handle_pair_created(info: Info, header: BlockHeader, event: StarkNetEv
     # start tracking events from pair contract
     info.add_event_filters(
         filters=[
-            EventFilter.from_event_name("Swap", address=pair_created.pair),
+            # EventFilter.from_event_name("Swap", address=pair_created.pair),
             EventFilter.from_event_name("Sync", address=pair_created.pair),
-            EventFilter.from_event_name("Transfer", address=pair_created.pair),
-            EventFilter.from_event_name("Mint", address=pair_created.pair),
-            EventFilter.from_event_name("Burn", address=pair_created.pair),
+            # EventFilter.from_event_name("Transfer", address=pair_created.pair),
+            # EventFilter.from_event_name("Mint", address=pair_created.pair),
+            # EventFilter.from_event_name("Burn", address=pair_created.pair),
         ]
     )
