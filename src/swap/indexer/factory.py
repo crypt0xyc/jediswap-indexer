@@ -55,6 +55,8 @@ async def handle_pair_created(info: Info, header: BlockHeader, event: StarkNetEv
             "reserve0": Decimal128("0"),
             "reserve1": Decimal128("0"),
             "total_supply": Decimal128("0"),
+            "last_update_time": info.context.block_timestamp,
+            "last_update_block": info.context.block_number,
             # derived liquidity
             "reserve_eth": Decimal128("0"),
             "reserve_usd": Decimal128("0"),

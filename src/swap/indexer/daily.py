@@ -123,7 +123,7 @@ async def update_exchange_day_data(info: Info[IndexerContext], address: int, upd
 
 async def snapshot_token_day_data(
     info: Info[IndexerContext], token_address: Union[int, bytes]
-):
+    ):
     if isinstance(token_address, int):
         token_address = felt(token_address)
 
@@ -157,7 +157,7 @@ async def snapshot_token_day_data(
 
 async def update_token_day_data(
     info: Info[IndexerContext], token: Union[int, bytes], update
-):
+    ):
     if isinstance(token, int):
         token = felt(token)
 

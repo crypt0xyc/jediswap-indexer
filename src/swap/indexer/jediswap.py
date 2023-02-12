@@ -1,14 +1,20 @@
 from decimal import Decimal
 from typing import Union
+from bson import Decimal128
 
 from apibara import Info
 
 from swap.indexer.context import IndexerContext
 from swap.indexer.helpers import felt
 
+from structlog import get_logger
+
+
+logger = get_logger(__name__)
+
 jediswap_factory = int(
     "0x00dad44c139a476c7a17fc8141e6db680e9abc9f56fe249a105094c44382c2fd", 16
-)
+    )
 
 index_from_block = 10_760
 
@@ -26,12 +32,12 @@ _whitelist = [
     int("068f5c6a61780768455de69077e07e89787839bf8166decfbf92b645209c0fb8", 16),
     # wBTC
     int("03fe2b97c1fd336e750087d68b9b867997fd64a2661ff3ca5a7c771641e8e7ac", 16),
-]
+    ]
 
 # Value from starkscan
 _eth_usdc_address = felt(
     2177149292491018417715774000056994188369467207221503622945886811766623165290
-)
+    )
 
 _minimum_liquidity_threshold_eth = Decimal("0")
 
@@ -61,10 +67,13 @@ async def find_eth_per_token(info: Info[IndexerContext], token: Union[int, bytes
                 token1 = await info.storage.find_one(
                     "tokens", {"id": felt(whitelisted)}
                 )
-                return (
-                    pair["token1_price"].to_decimal()
-                    * token1["derived_eth"].to_decimal()
-                )
+                token0_derived_eth = pair["token1_price"].to_decimal() * token1["derived_eth"].to_decimal()
+                await info.storage.find_one_and_update(
+                    "tokens", 
+                    {"id": token}, 
+                    {"$set": {"derived_eth": Decimal128(token0_derived_eth)}},
+                    )
+                return (token0_derived_eth)
 
         pair = await info.storage.find_one(
             "pairs", {"token1_id": token, "token0_id": felt(whitelisted)}
@@ -74,17 +83,20 @@ async def find_eth_per_token(info: Info[IndexerContext], token: Union[int, bytes
                 token0 = await info.storage.find_one(
                     "tokens", {"id": felt(whitelisted)}
                 )
-                return (
-                    pair["token0_price"].to_decimal()
-                    * token0["derived_eth"].to_decimal()
-                )
+                token1_derived_eth = pair["token0_price"].to_decimal() * token0["derived_eth"].to_decimal()
+                await info.storage.find_one_and_update(
+                    "tokens", 
+                    {"id": token}, 
+                    {"$set": {"derived_eth": Decimal128(token1_derived_eth)}},
+                    )
+                return (token1_derived_eth)
 
     return Decimal("0")
 
 
 async def get_tracked_liquidity_usd(
     info: Info[IndexerContext], token0, token0_amount, token1, token1_amount
-):
+    ):
     eth_usd = info.context.eth_price
     price0 = token0["derived_eth"].to_decimal() * eth_usd
     price1 = token1["derived_eth"].to_decimal() * eth_usd
@@ -115,7 +127,7 @@ async def get_tracked_liquidity_usd(
 
 async def get_tracked_volume_usd(
     info: Info[IndexerContext], token0, token0_amount, token1, token1_amount, pair
-):
+    ):
     price0 = token0["derived_eth"].to_decimal() * info.context.eth_price
     price1 = token1["derived_eth"].to_decimal() * info.context.eth_price
 

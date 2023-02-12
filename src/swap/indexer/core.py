@@ -6,31 +6,50 @@ from bson import Decimal128
 from more_itertools import pairwise
 from structlog import get_logger
 
-from swap.indexer.abi import (burn_decoder, decode_event, mint_decoder,
-                                 swap_decoder, sync_decoder, transfer_decoder)
+from swap.indexer.abi import (
+    burn_decoder,
+    decode_event,
+    mint_decoder,
+    swap_decoder,
+    sync_decoder,
+    transfer_decoder
+    )
 from swap.indexer.context import IndexerContext
-from swap.indexer.daily import (snapshot_exchange_day_data,
-                                   snapshot_pair_day_data,
-                                   snapshot_pair_hour_data,
-                                   snapshot_token_day_data,
-                                   update_exchange_day_data,
-                                   update_pair_day_data, update_pair_hour_data,
-                                   update_token_day_data)
-from swap.indexer.helpers import (create_liquidity_snapshot, create_token,
-                                     create_transaction, felt,
-                                     fetch_token_balance, price,
-                                     replace_liquidity_position, to_decimal,
-                                     update_transaction_count)
-from swap.indexer.jediswap import (find_eth_per_token,
-                                      get_tracked_liquidity_usd,
-                                      get_tracked_volume_usd, jediswap_factory)
+from swap.indexer.daily import (
+    snapshot_exchange_day_data,
+    snapshot_pair_day_data,
+    snapshot_pair_hour_data,
+    snapshot_token_day_data,
+    update_exchange_day_data,
+    update_pair_day_data,
+    update_pair_hour_data,
+    update_token_day_data
+    )
+from swap.indexer.helpers import (
+    create_liquidity_snapshot,
+    # create_token,
+    create_transaction,
+    felt,
+    fetch_token_balance,
+    price,
+    replace_liquidity_position,
+    to_decimal,
+    update_transaction_count
+    )
+from swap.indexer.jediswap import (
+    find_eth_per_token,
+    get_tracked_liquidity_usd,
+    get_tracked_volume_usd,
+    jediswap_factory
+    )
+
 
 logger = get_logger(__name__)
 
 
 async def handle_transfer(
     info: Info[IndexerContext], header: BlockHeader, event: StarkNetEvent
-):
+    ):
     transfer = decode_event(transfer_decoder, event.data)
     pair_address = int.from_bytes(event.address, "big")
     logger.info("handle Transfer", **transfer._asdict())
@@ -183,7 +202,7 @@ async def handle_transfer(
 
 async def handle_sync(
     info: Info[IndexerContext], header: BlockHeader, event: StarkNetEvent
-):
+    ):
     sync = decode_event(sync_decoder, event.data)
     pair_address = int.from_bytes(event.address, "big")
     logger.info("handle Sync", **sync._asdict())
@@ -222,6 +241,8 @@ async def handle_sync(
                 "reserve1": Decimal128(reserve1),
                 "token0_price": Decimal128(token0_price),
                 "token1_price": Decimal128(token1_price),
+                "last_update_time": info.context.block_timestamp,
+                "last_update_block": info.context.block_number,
             }
         },
     )
@@ -239,13 +260,15 @@ async def handle_sync(
 
     await info.storage.find_one_and_update(
         "tokens",
-        {"id": pair["token0_id"]},
+        # {"id": pair["token0_id"]},
+        {"id": token0["id"]},
         {"$set": {"total_liquidity": Decimal128(token0_liquidity)}},
     )
 
     await info.storage.find_one_and_update(
         "tokens",
-        {"id": pair["token1_id"]},
+        # {"id": pair["token1_id"]},
+        {"id": token0["id"]},
         {"$set": {"total_liquidity": Decimal128(token1_liquidity)}},
     )
 
@@ -290,9 +313,8 @@ async def handle_sync(
 
     factory = await info.storage.find_one("factories", {"id": felt(jediswap_factory)})
 
-    total_liquidity_eth = (
-        factory["total_liquidity_eth"].to_decimal() + tracked_liquidity_eth
-    )
+    total_liquidity_eth = factory["total_liquidity_eth"].to_decimal() - old_pair["tracked_reserve_eth"].to_decimal() + tracked_liquidity_eth
+
     total_liquidity_usd = total_liquidity_eth * info.context.eth_price
 
     await info.storage.find_one_and_update(
@@ -305,11 +327,12 @@ async def handle_sync(
             }
         },
     )
+    pair_address = int.from_bytes(event.address, "big")
 
 
 async def handle_mint(
     info: Info[IndexerContext], header: BlockHeader, event: StarkNetEvent
-):
+    ):
     mint = decode_event(mint_decoder, event.data)
     pair_address = int.from_bytes(event.address, "big")
     logger.info("handle Mint", **mint._asdict())
@@ -424,10 +447,6 @@ async def handle_burn(info: Info, header: BlockHeader, event: StarkNetEvent):
     token1 = await info.storage.find_one("tokens", {"id": pair["token1_id"]})
     assert token1 is not None
 
-    await info.storage.find_one_and_update(
-        "factories", {"id": felt(jediswap_factory)}, {"$inc": {"transaction_count": 1}}
-    )
-
     await update_transaction_count(info, jediswap_factory, pair_address, token0, token1)
 
     token0_amount = to_decimal(burn.amount0, token0["decimals"])
@@ -484,7 +503,7 @@ async def handle_burn(info: Info, header: BlockHeader, event: StarkNetEvent):
 
 async def handle_swap(
     info: Info[IndexerContext], header: BlockHeader, event: StarkNetEvent
-):
+    ):
     swap = decode_event(swap_decoder, event.data)
     pair_address = int.from_bytes(event.address, "big")
     logger.info("handle Swap", **swap._asdict())

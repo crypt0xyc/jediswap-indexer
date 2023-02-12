@@ -1,14 +1,11 @@
-# DEX Indexer and GraphQL API with Apibara
+# JediSwap Indexer and GraphQL API with Apibara
 
-This repository shows how to use Apibara to index a decentralized exchange (DEX) and build a GraphQL API.
+This repository shows how to use Apibara to index JediSwap - a decentralized exchange (DEX) on StarkNet - and build a GraphQL API to access the data.
 
-This project separates the indexer from the API server so that it becomes easier to deploy and scale in a production environment.
-
-You should always run a single instance of the indexer but can run multiple API servers side by side to serve more users.
+The indexer is separated from the API server, so that it becomes easier to deploy and scale in a production environment. There should always only be a single instance of the indexer running, but there can be multiple API servers side by side to serve a larger number of users.
 
 The project uses:
-
- * the [Apibara Python SDK](https://www.apibara.com/docs/python-sdk) for receiving StarkNet data.
+ * [Apibara Python SDK](https://www.apibara.com/docs/python-sdk) for receiving StarkNet data.
  * MongoDB for storage.
  * [Strawberry GraphQL](https://strawberry.rocks/) for the GraphQL API server.
 
@@ -17,11 +14,11 @@ The project uses:
 
 Create a new virtual environment for this project. While this step is not required, it is _highly recommended_ to avoid conflicts between different installed packages.
 
-    python3 -m venv venv
+    python3 -m venv .venv
 
 Then activate the virtual environment.
 
-    source venv/bin/activate
+    source .venv/bin/activate
 
 Then install `poetry` and use it to install the package dependencies.
 
@@ -32,7 +29,7 @@ Start MongoDB using the provided `docker-compose` file:
 
     docker-compose up
 
-Notice that you can use any managed MongoDB like MongoDB Atlas.
+Note: You can use any managed MongoDB like MongoDB Atlas.
 
 
 ## Getting started
@@ -50,9 +47,11 @@ poetry run swap-indexer indexer \
 
 where:
 
- * `<stream-url>`: the Apibara stream, should be `mainnet.starknet.stream.apibara.com`.
- * `<mongo-url>`: mongodb connection url. If you use the provided docker compose file use `mongodb://apibara:apibara@localhost:27017`.
+ * `<stream-url>`: the Apibara stream, should be `mainnet.starknet.stream.apibara.com` (if that doesn't work, try `mainnet.starknet.a5a.ch`)
+ * `<mongo-url>`: mongodb connection url. If you use the provided docker compose file, use `mongodb://apibara:apibara@localhost:27017`.
  * `<rpc-url>`: the StarkNet RPC url. You can use Infura for this.
+
+Note: Instead of supplying the arguments through the CLI, they can also be passed as environment variables (requires only slight changes to the code).
 
 The indexer will then start indexing your DEX.
 
